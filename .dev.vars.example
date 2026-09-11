@@ -1,0 +1,6 @@
+# Optional, for testing the locked Pages runtime locally.
+# For normal local map development use npm run dev (no login).
+# Configure these in the Cloudflare Pages dashboard for a hosted deployment.
+ACCESS_TEAM_DOMAIN=https://your-team.cloudflareaccess.com
+ACCESS_AUD=your-application-audience-tag
+OS_API_KEY=

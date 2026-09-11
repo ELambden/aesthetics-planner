@@ -1,0 +1,6 @@
+name = "lina-location-map"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-09"
+
+# Set ACCESS_TEAM_DOMAIN, ACCESS_AUD and OS_API_KEY in the Pages dashboard.
+# An unconfigured deployment refuses all requests. See CLOUDFLARE_SETUP.md.
