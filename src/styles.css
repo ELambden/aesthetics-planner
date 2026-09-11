@@ -562,8 +562,15 @@ button {
 .score-large {
   padding: 18px 14px 4px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.score-summary {
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 12px;
+  gap: 8px;
 }
 
 .score-large strong {

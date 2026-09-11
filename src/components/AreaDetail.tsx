@@ -27,12 +27,15 @@ export function AreaDetail({ area }: Props) {
         <h2>{p.areaName}</h2>
       </div>
       <div className="score-large">
-        <strong>{p.overallScore}</strong>
+        <div className="score-summary">
+          <span>Average score:</span>
+          <strong>{p.overallScore}</strong>
+        </div>
         <span>Rank {p.rank}</span>
       </div>
       <div className="metric-grid">
-        <Metric label="Density" value={formatNumber(p.populationDensity)} />
-        <Metric label="Nearest" value={formatKm(p.nearestClinicKm)} />
+        <Metric label="Pop. density (km²)" value={formatNumber(p.populationDensity)} />
+        <Metric label="Nearest clinic:" value={formatKm(p.nearestClinicKm)} />
         <Metric label="2 km clinics" value={String(p.clinicCount2Km)} />
         <Metric label="Median sale" value={formatCurrency(p.propertyMedian)} />
       </div>
