@@ -10,8 +10,8 @@ type Props = {
 };
 
 const sliders: Array<{ key: keyof ScoreWeights; label: string; icon: typeof UsersRound }> = [
-  { key: "density", label: "Demand density", icon: UsersRound },
-  { key: "access", label: "Access gap", icon: Building2 },
+  { key: "density", label: "Population density", icon: UsersRound },
+  { key: "access", label: "Accessibility of nearby clinics", icon: Building2 },
   { key: "affluence", label: "Affluence", icon: Banknote }
 ];
 
@@ -57,7 +57,11 @@ export function ScoreControls({ preset, weights, onPresetChange, onWeightsChange
         {sliders.map((slider) => {
           const Icon = slider.icon;
           return (
-            <label key={slider.key} className="slider-row">
+            <label
+              key={slider.key}
+              className="slider-row"
+              title={slider.key === "access" ? "Higher scores mean fewer nearby clinics." : undefined}
+            >
               <span>
                 <span className="slider-label">
                   <Icon aria-hidden="true" />

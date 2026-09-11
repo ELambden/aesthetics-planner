@@ -3,7 +3,7 @@ import * as maplibregl from "maplibre-gl";
 import type { Map as MapLibreMap, GeoJSONSource, MapGeoJSONFeature, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import mapWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import { Layers, MapPinned } from "lucide-react";
+import { Layers, LocateFixed, Minus, Plus } from "lucide-react";
 import { formatNumber } from "../lib/scoring";
 import type { Clinic, DensityFeatureCollection, OpportunityFeature } from "../types/domain";
 
@@ -11,7 +11,6 @@ import type { Clinic, DensityFeatureCollection, OpportunityFeature } from "../ty
 maplibregl.setWorkerUrl(mapWorkerUrl);
 
 type Props = {
-  googleMapsKey: string;
   osApiKey: string;
   center: { lat: number; lng: number };
   zoom: number;
@@ -31,7 +30,6 @@ const essexBounds: [[number, number], [number, number]] = [
 ];
 
 export function MapView({
-  googleMapsKey,
   osApiKey,
   center,
   zoom,
@@ -83,7 +81,6 @@ export function MapView({
 
       map.dragRotate.disable();
       map.touchZoomRotate.disableRotation();
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
       map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
 
       map.on("load", () => setMapReady(true));
@@ -260,43 +257,47 @@ export function MapView({
           <Layers aria-hidden="true" />
           <span>{basemapLabel}</span>
         </div>
-        <div className="density-scale" aria-label="Population density scale">
-          <div className="scale-title">Population density</div>
-          <div className="scale-ramp" />
-          <div className="scale-labels">
-            <span>{densityStats ? `${formatNumber(densityStats.min)}/km2` : "Low"}</span>
-            <span>{densityStats ? `${formatNumber(densityStats.max)}/km2` : "High"}</span>
-          </div>
-          <div className="scale-notes">Low · Moderate · High</div>
-        </div>
       </div>
 
       <div ref={mapNode} className="google-map" />
       {mapError && <div className="map-error">Some map features could not load. Reload to try again.</div>}
 
-      <div className="street-view-panel">
-        <div className="street-title">
-          <MapPinned aria-hidden="true" />
-          <span>{selectedArea ? selectedArea.properties.areaName : "Selected zone"}</span>
+      <div className="density-scale" aria-label="Population density scale">
+        <div className="scale-ramp" aria-hidden="true" />
+        <div className="scale-labels">
+          <span>{densityStats ? `${formatNumber(densityStats.min)}/km²` : "—"}</span>
+          <span>{densityStats ? `${formatNumber(densityStats.max)}/km²` : "—"}</span>
         </div>
-        <div className="zone-actions">
-          {selectedArea && (
-            <button type="button" onClick={() => flyToArea(selectedArea)}>
-              Centre map
-            </button>
-          )}
-          {selectedClinic && googleMapsKey && (
-            <iframe
-              title={`Street View for ${selectedClinic.name}`}
-              className="street-view"
-              src={`https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(
-                googleMapsKey
-              )}&location=${selectedClinic.lat},${selectedClinic.lng}&heading=40&pitch=0&fov=80`}
-              loading="lazy"
-            />
-          )}
-          {!selectedClinic && <div className="street-placeholder">Select a shaded area or clinic marker for details.</div>}
-        </div>
+      </div>
+
+      <div className="map-controls" role="group" aria-label="Map controls">
+        <button
+          type="button"
+          aria-label="Zoom in"
+          title="Zoom in"
+          disabled={!mapReady}
+          onClick={() => mapRef.current?.zoomIn({ duration: 250 })}
+        >
+          <Plus aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Zoom out"
+          title="Zoom out"
+          disabled={!mapReady}
+          onClick={() => mapRef.current?.zoomOut({ duration: 250 })}
+        >
+          <Minus aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Centre map on selected area"
+          title={selectedArea ? `Centre map on ${selectedArea.properties.areaName}` : "Select an area to centre the map"}
+          disabled={!mapReady || !selectedArea}
+          onClick={() => selectedArea && flyToArea(selectedArea)}
+        >
+          <LocateFixed aria-hidden="true" />
+        </button>
       </div>
     </section>
   );

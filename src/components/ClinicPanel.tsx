@@ -4,6 +4,7 @@ import type { Clinic, ClinicReviewStatus } from "../types/domain";
 const confidenceOrder = { high: 3, medium: 2, low: 1 } as const;
 
 type Props = {
+  googleMapsKey?: string;
   clinics: Clinic[];
   selectedClinic?: Clinic;
   statusFilter: ClinicReviewStatus | "all";
@@ -11,7 +12,7 @@ type Props = {
   onSelectClinic?: (clinic: Clinic) => void;
 };
 
-export function ClinicPanel({ clinics, selectedClinic, statusFilter, onStatusFilter, onSelectClinic }: Props) {
+export function ClinicPanel({ googleMapsKey, clinics, selectedClinic, statusFilter, onStatusFilter, onSelectClinic }: Props) {
   const sortedClinics = [...clinics].sort((a, b) => {
     const confidenceDelta = confidenceOrder[b.confidence ?? "low"] - confidenceOrder[a.confidence ?? "low"];
     if (confidenceDelta !== 0) return confidenceDelta;
@@ -81,6 +82,16 @@ export function ClinicPanel({ clinics, selectedClinic, statusFilter, onStatusFil
             )}
           </div>
           <small>Cache expires {new Date(selectedClinic.expiresAt).toLocaleDateString("en-GB")}</small>
+          {googleMapsKey && (
+            <iframe
+              title={`Street View for ${selectedClinic.name}`}
+              className="clinic-street-view"
+              src={`https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(
+                googleMapsKey
+              )}&location=${selectedClinic.lat},${selectedClinic.lng}&heading=40&pitch=0&fov=80`}
+              loading="lazy"
+            />
+          )}
         </div>
       ) : (
         <div className="clinic-detail muted">Select a clinic marker for details.</div>

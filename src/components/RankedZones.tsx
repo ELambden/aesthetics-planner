@@ -50,8 +50,8 @@ export function RankedZones({ areas, selectedAreaCode, onSelect }: Props) {
                 <span title="Median property price">{formatCurrency(p.propertyMedian)} median home</span>
               </span>
               <span className="rank-drivers">
-                <RankDriver label="Demand density" score={p.densityScore} tone="density" />
-                <RankDriver label="Access gap" score={p.accessGapScore} tone="access" />
+                <RankDriver label="Population density" score={p.densityScore} tone="density" />
+                <RankDriver label="Accessibility of nearby clinics" score={p.accessGapScore} tone="access" />
                 <RankDriver label="Affluence" score={p.affluenceScore} tone="affluence" />
               </span>
             </button>

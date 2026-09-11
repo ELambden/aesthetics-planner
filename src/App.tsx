@@ -130,7 +130,6 @@ function App() {
         </aside>
 
         <MapView
-          googleMapsKey={config.googleMapsKey}
           osApiKey={config.osApiKey}
           center={config.mapCenter}
           zoom={config.mapZoom}
@@ -146,6 +145,7 @@ function App() {
         <aside className="right-rail">
           <AreaDetail area={selectedArea} />
           <ClinicPanel
+            googleMapsKey={config.googleMapsKey}
             clinics={clinics}
             selectedClinic={selectedClinic}
             statusFilter={clinicStatus}

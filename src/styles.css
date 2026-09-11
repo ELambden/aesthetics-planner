@@ -82,8 +82,7 @@ button {
 
 .private-badge svg,
 .panel-title svg,
-.map-toolbar svg,
-.street-title svg {
+.map-toolbar svg {
   width: 18px;
   height: 18px;
 }
@@ -188,9 +187,12 @@ button {
   gap: 7px;
 }
 
-.slider-row span {
+.slider-row > span {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  line-height: 1.4;
   color: #314941;
   font-size: 13px;
 }
@@ -326,7 +328,7 @@ button {
 
 .rank-driver {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) 24px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 24px;
   align-items: center;
   gap: 8px;
   color: #526660;
@@ -478,42 +480,53 @@ button {
   outline: 3px solid rgba(15, 118, 110, 0.25);
 }
 
-.street-view-panel {
+.map-controls {
   position: absolute;
   z-index: 6;
   right: 12px;
-  bottom: 12px;
-  width: min(340px, calc(100% - 24px));
-  overflow: hidden;
-  border: 1px solid rgba(209, 219, 215, 0.94);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 28px rgba(22, 31, 28, 0.16);
+  bottom: 36px;
+  display: grid;
+  gap: 4px;
 }
 
-.street-title {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.street-view,
-.street-placeholder {
-  height: 180px;
-}
-
-.street-placeholder {
+.map-controls button {
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  padding: 12px;
-  background: #e6eeeb;
-  color: #61716b;
-  font-size: 13px;
-  text-align: center;
+  border: 1px solid rgba(105, 128, 118, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #193e32;
+  box-shadow: 0 2px 8px rgba(22, 31, 28, 0.12);
+}
+
+.map-controls button:hover:not(:disabled) {
+  background: #ffffff;
+  color: #0c5d48;
+}
+
+.map-controls button:focus-visible {
+  outline: 2px solid #14735a;
+  outline-offset: 2px;
+}
+
+.map-controls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.map-controls svg {
+  width: 20px;
+  height: 20px;
+}
+
+.clinic-street-view {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 180px;
+  border: 0;
+  border-radius: 7px;
 }
 
 .metric-grid {
@@ -572,7 +585,7 @@ button {
 
 .driver {
   display: grid;
-  grid-template-columns: 90px 1fr 34px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 34px;
   align-items: center;
   gap: 8px;
   font-size: 12px;
@@ -754,14 +767,6 @@ button {
   .map-toolbar {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .street-view-panel {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    margin: 12px;
-    width: auto;
   }
 }
 
@@ -960,13 +965,18 @@ body {
 }
 
 .slider-label {
-  display: inline-flex !important;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-start !important;
   gap: 7px;
 }
 
+.slider-row strong {
+  flex-shrink: 0;
+}
+
 .slider-label svg {
+  flex-shrink: 0;
   width: 14px;
   height: 14px;
 }
@@ -980,38 +990,36 @@ body {
 }
 
 .density-scale {
-  width: min(300px, 42vw);
-  min-height: 92px;
-  display: grid !important;
-  gap: 6px !important;
-  align-items: stretch !important;
-  padding: 10px 12px !important;
-  pointer-events: auto;
-}
-
-.scale-title {
-  color: #233b34;
-  font-size: 12px;
-  font-weight: 800;
+  position: absolute;
+  z-index: 5;
+  left: 12px;
+  bottom: 36px;
+  width: min(260px, calc(100% - 88px));
+  display: grid;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .scale-ramp {
-  height: 12px;
-  border: 1px solid rgba(25, 39, 36, 0.12);
+  height: 10px;
+  border: 1px solid rgba(25, 39, 36, 0.2);
   border-radius: 999px;
   background: linear-gradient(90deg, #8d3f3d 0%, #d67d4a 30%, #efc45a 48%, #67a96a 70%, #15724d 100%);
 }
 
-.scale-labels,
-.scale-notes {
+.scale-labels {
   display: flex;
   justify-content: space-between;
-  color: #5d706a;
-  font-size: 11px;
-}
-
-.scale-notes {
-  color: #74827d;
+  gap: 10px;
+  color: #000000;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .metric {
@@ -1092,9 +1100,5 @@ body {
 @media (max-width: 760px) {
   .ranked-panel {
     max-height: 440px;
-  }
-
-  .density-scale {
-    width: min(300px, calc(100vw - 48px));
   }
 }

@@ -37,8 +37,8 @@ export function AreaDetail({ area }: Props) {
         <Metric label="Median sale" value={formatCurrency(p.propertyMedian)} />
       </div>
       <div className="driver-list">
-        <Driver label="Density" value={p.densityScore} />
-        <Driver label="Access gap" value={p.accessGapScore} />
+        <Driver label="Population density" value={p.densityScore} />
+        <Driver label="Accessibility of nearby clinics" value={p.accessGapScore} />
         <Driver label="Affluence" value={p.affluenceScore} />
       </div>
     </section>
