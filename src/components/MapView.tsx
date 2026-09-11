@@ -2,9 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { Map as MapLibreMap, GeoJSONSource, MapGeoJSONFeature, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import mapWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { Layers, MapPinned } from "lucide-react";
 import { formatNumber } from "../lib/scoring";
 import type { Clinic, DensityFeatureCollection, OpportunityFeature } from "../types/domain";
+
+// Bundle the worker and its shared module, including the GitHub Pages base path.
+maplibregl.setWorkerUrl(mapWorkerUrl);
 
 type Props = {
   googleMapsKey: string;
@@ -43,7 +47,7 @@ export function MapView({
   const mapRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [basemapLabel, setBasemapLabel] = useState(osApiKey ? "Loading OS basemap" : "Open fallback basemap");
+  const [basemapLabel, setBasemapLabel] = useState(osApiKey ? "Loading OS basemap" : "OpenStreetMap basemap");
 
   const rankedByCode = useMemo(() => new Map(areas.map((area) => [area.properties.areaCode, area])), [areas]);
   const densityStats = useMemo(() => {
@@ -154,21 +158,29 @@ export function MapView({
         "line-width": 2.5
       }
     });
+  }, [densityOverlay, mapReady]);
 
-    map.on("click", "density-fill", (event) => {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+    const selectArea = (event: maplibregl.MapLayerMouseEvent) => {
+      if (map.queryRenderedFeatures(event.point, { layers: ["clinic-points"] }).length) return;
       const feature = event.features?.[0] as MapGeoJSONFeature | undefined;
       const areaCode = feature?.properties?.areaCode as string | undefined;
       const area = areaCode ? rankedByCode.get(areaCode) : undefined;
       if (area) onSelectArea(area);
-    });
-
-    map.on("mouseenter", "density-fill", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-    map.on("mouseleave", "density-fill", () => {
-      map.getCanvas().style.cursor = "";
-    });
-  }, [densityOverlay, mapReady, onSelectArea, rankedByCode]);
+    };
+    const enterArea = () => { map.getCanvas().style.cursor = "pointer"; };
+    const leaveArea = () => { map.getCanvas().style.cursor = ""; };
+    map.on("click", "density-fill", selectArea);
+    map.on("mouseenter", "density-fill", enterArea);
+    map.on("mouseleave", "density-fill", leaveArea);
+    return () => {
+      map.off("click", "density-fill", selectArea);
+      map.off("mouseenter", "density-fill", enterArea);
+      map.off("mouseleave", "density-fill", leaveArea);
+    };
+  }, [mapReady, onSelectArea, rankedByCode]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -208,14 +220,28 @@ export function MapView({
         "circle-stroke-width": 2
       }
     });
+  }, [clinics, mapReady, selectedClinic?.id]);
 
-    map.on("click", "clinic-points", (event) => {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+    const selectClinic = (event: maplibregl.MapLayerMouseEvent) => {
       const feature = event.features?.[0] as MapGeoJSONFeature | undefined;
       const id = feature?.properties?.id as string | undefined;
       const clinic = clinics.find((candidate) => candidate.id === id);
       if (clinic) onSelectClinic(clinic);
-    });
-  }, [clinics, mapReady, onSelectClinic, selectedClinic?.id]);
+    };
+    const enterClinic = () => { map.getCanvas().style.cursor = "pointer"; };
+    const leaveClinic = () => { map.getCanvas().style.cursor = ""; };
+    map.on("click", "clinic-points", selectClinic);
+    map.on("mouseenter", "clinic-points", enterClinic);
+    map.on("mouseleave", "clinic-points", leaveClinic);
+    return () => {
+      map.off("click", "clinic-points", selectClinic);
+      map.off("mouseenter", "clinic-points", enterClinic);
+      map.off("mouseleave", "clinic-points", leaveClinic);
+    };
+  }, [clinics, mapReady, onSelectClinic]);
 
   useEffect(() => {
     if (!mapReady || !selectedClinic) return;
@@ -246,7 +272,7 @@ export function MapView({
       </div>
 
       <div ref={mapNode} className="google-map" />
-      {mapError && <div className="map-error">Some basemap tiles failed; density data remains interactive.</div>}
+      {mapError && <div className="map-error">Some map features could not load. Reload to try again.</div>}
 
       <div className="street-view-panel">
         <div className="street-title">
@@ -269,7 +295,7 @@ export function MapView({
               loading="lazy"
             />
           )}
-          {!selectedClinic && <div className="street-placeholder">Select areas to inspect density; clinics come next.</div>}
+          {!selectedClinic && <div className="street-placeholder">Select a shaded area or clinic marker for details.</div>}
         </div>
       </div>
     </section>
@@ -277,7 +303,7 @@ export function MapView({
 }
 
 async function getInitialStyle(osApiKey: string): Promise<{ style: StyleSpecification; label: string }> {
-  if (!osApiKey) return { style: fallbackStyle(), label: "Open fallback basemap" };
+  if (!osApiKey) return { style: fallbackStyle(), label: "OpenStreetMap basemap" };
 
   try {
     const response = await fetch(`${osStyleUrl}&key=${encodeURIComponent(osApiKey)}`);
@@ -303,7 +329,7 @@ async function getInitialStyle(osApiKey: string): Promise<{ style: StyleSpecific
       label: "OS Vector Tile basemap"
     };
   } catch {
-    return { style: fallbackStyle(), label: "Open fallback basemap" };
+    return { style: fallbackStyle(), label: "OpenStreetMap basemap" };
   }
 }
 

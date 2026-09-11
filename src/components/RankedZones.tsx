@@ -1,5 +1,5 @@
 import { MapPin, TrendingUp } from "lucide-react";
-import { formatCurrency, formatKm, formatNumber } from "../lib/scoring";
+import { clampScore, formatCurrency, formatKm, formatNumber } from "../lib/scoring";
 import type { OpportunityFeature } from "../types/domain";
 
 type Props = {
@@ -28,32 +28,49 @@ export function RankedZones({ areas, selectedAreaCode, onSelect }: Props) {
               type="button"
               key={p.areaCode}
               className={selectedAreaCode === p.areaCode ? "rank-row selected" : "rank-row"}
+              aria-pressed={selectedAreaCode === p.areaCode}
               onClick={() => onSelect(area)}
             >
-              <span className="rank-number">{p.rank}</span>
-              <span className="rank-main">
-                <strong>{p.areaName}</strong>
-                <span>
-                  {p.localAuthority} · {formatKm(p.nearestClinicKm)} nearest · {p.clinicCount5Km} within 5 km
+              <span className="rank-header">
+                <span className="rank-number">{p.rank}</span>
+                <span className="rank-main">
+                  <strong>{p.areaName}</strong>
+                  <span>{p.localAuthority}</span>
+                </span>
+                <span className="score-pill" aria-label={`Opportunity score ${p.overallScore} out of 100`}>
+                  <TrendingUp aria-hidden="true" />
+                  {p.overallScore}
                 </span>
               </span>
-              <span className="score-pill">
-                <TrendingUp aria-hidden="true" />
-                {p.overallScore}
+              <span className="rank-proximity">
+                {formatKm(p.nearestClinicKm)} to nearest clinic · {p.clinicCount5Km} within 5 km
               </span>
               <span className="rank-meta">
-                <span>{formatNumber(p.populationDensity)}/km2</span>
-                <span>{formatCurrency(p.propertyMedian)}</span>
+                <span>{formatNumber(p.populationDensity)} people/km²</span>
+                <span title="Median property price">{formatCurrency(p.propertyMedian)} median home</span>
               </span>
-              <span className="rank-spark" aria-hidden="true">
-                <i style={{ width: `${Math.max(4, p.densityScore)}%` }} />
-                <i style={{ width: `${Math.max(4, p.accessGapScore)}%` }} />
-                <i style={{ width: `${Math.max(4, p.affluenceScore)}%` }} />
+              <span className="rank-drivers">
+                <RankDriver label="Demand density" score={p.densityScore} tone="density" />
+                <RankDriver label="Access gap" score={p.accessGapScore} tone="access" />
+                <RankDriver label="Affluence" score={p.affluenceScore} tone="affluence" />
               </span>
             </button>
           );
         })}
       </div>
     </section>
+  );
+}
+
+function RankDriver({ label, score, tone }: { label: string; score: number; tone: string }) {
+  const value = clampScore(score);
+  return (
+    <span className={`rank-driver rank-driver-${tone}`}>
+      <span>{label}</span>
+      <span className="rank-driver-track" aria-hidden="true">
+        <i style={{ width: `${value}%` }} />
+      </span>
+      <span className="rank-driver-value" aria-label={`${value} out of 100`}>{value}</span>
+    </span>
   );
 }

@@ -32,6 +32,18 @@ async function checkFiles(directory) {
 }
 await checkFiles(output);
 
+// GeoJSON layers silently disappear if the MapLibre worker is missing from a build.
+const assets = await readdir(join(output, "assets"));
+const workers = assets.filter((name) => /^maplibre-gl-worker-[\w-]+\.js$/.test(name));
+assert.equal(workers.length, 1, "The bundled MapLibre worker must be included in the deployment.");
+const worker = await readFile(join(output, "assets", workers[0]), "utf8");
+assert(!worker.includes("maplibre-gl-shared.mjs"),
+  "Bundle the worker's shared module using Vite's ?worker&url import.");
+const scripts = await Promise.all(assets.filter((name) => name.endsWith(".js") && name !== workers[0])
+  .map((name) => readFile(join(output, "assets", name), "utf8")));
+assert(scripts.some((script) => script.includes(workers[0])),
+  "The application must reference the emitted worker asset.");
+
 const dataFiles = ["clinics.json", "density-overlay.geojson", "opportunity-areas.geojson"];
 assert.deepEqual((await readdir(join(output, "data"))).sort(), [...dataFiles].sort(),
   "Deploy only the three prepared map datasets.");
