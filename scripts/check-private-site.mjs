@@ -8,7 +8,7 @@ if (!inputs.length) {
 const html = await readFile("dist/index.html", "utf8");
 const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((match) => match[1]);
 const paths = ["/", "/index.html", "/api/config", "/data/clinics.json",
-  "/data/opportunity-areas.geojson", "/data/density-overlay.geojson", ...assets];
+  "/data/opportunity-areas.geojson", "/data/density-overlay.geojson", "/data/stations.json", ...assets];
 let failures = 0;
 for (const input of inputs) {
   const base = new URL(input);

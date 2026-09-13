@@ -5,7 +5,8 @@ import type {
   ClinicReviewStatus,
   DensityFeatureCollection,
   OpportunityFeatureCollection,
-  ScoreWeights
+  ScoreWeights,
+  StationDataset
 } from "../types/domain";
 
 export const MAP_LOAD_ERROR = import.meta.env.MODE === "github-pages"
@@ -48,4 +49,8 @@ export async function getClinics(status: ClinicReviewStatus | "all"): Promise<Cl
 
 export async function getDensityOverlay(): Promise<DensityFeatureCollection> {
   return readJson<DensityFeatureCollection>("/data/density-overlay.geojson");
+}
+
+export async function getStations(): Promise<StationDataset> {
+  return readJson<StationDataset>("/data/stations.json");
 }

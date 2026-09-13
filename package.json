@@ -22,6 +22,8 @@
     "data:build-density": "tsx scripts/build-density-overlay.ts",
     "data:refresh-places": "tsx scripts/refresh-places.ts",
     "data:refresh-overture": "tsx scripts/refresh-overture.ts",
+    "data:build-stations": ".venv/bin/python scripts/build-stations.py",
+    "data:refresh-stations": ".venv/bin/python scripts/build-stations.py --download",
     "data:score": "tsx scripts/score.ts",
     "data:validate": "tsx scripts/validate-data.ts"
   },

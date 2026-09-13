@@ -81,3 +81,30 @@ export type AppConfig = {
   mapZoom: number;
   accessProtected: boolean;
 };
+
+export type Station = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  locality: string;
+  modes: Array<"Rail" | "Underground" | "DLR">;
+  sourceIds: string[];
+  inStudyArea: boolean;
+  boundaryDistanceKm: number;
+  areaCode?: string;
+  localAuthority?: string;
+};
+
+export type StationDataset = {
+  updatedAt: string;
+  source: string;
+  sourceUrl: string;
+  attribution: string;
+  licenceUrl: string;
+  studyArea: string;
+  coverageSourceSha256: string;
+  stations: Station[];
+};
+
+export type StationRadius = 0.5 | 1;

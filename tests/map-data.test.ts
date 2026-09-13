@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getAreas, getClinics, getConfig, getDensityOverlay } from "../src/lib/api";
+import { getAreas, getClinics, getConfig, getDensityOverlay, getStations } from "../src/lib/api";
 import { PRESET_WEIGHTS } from "../src/lib/scoring";
 
 afterEach(() => {
@@ -21,7 +21,8 @@ describe("hosted map data", () => {
     await getAreas(PRESET_WEIGHTS.balanced);
     await getClinics("all");
     await getDensityOverlay();
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    await getStations();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it("runs the GitHub Pages build without a server configuration or login", async () => {
@@ -50,6 +51,7 @@ describe("hosted map data", () => {
     expect((await getClinics("all")).length).toBe(localClinics.length);
     expect((await getClinics("needs_review")).every((clinic) => clinic.reviewStatus === "needs_review")).toBe(true);
     expect((await getDensityOverlay()).features.length).toBeGreaterThan(0);
+    expect((await getStations()).stations.length).toBeGreaterThan(100);
   });
 
   it.each([401, 403, 404, 503])("never substitutes sample data after HTTP %i", async (status) => {
@@ -57,6 +59,7 @@ describe("hosted map data", () => {
     await expect(getAreas(PRESET_WEIGHTS.balanced)).rejects.toThrow();
     await expect(getClinics("all")).rejects.toThrow();
     await expect(getDensityOverlay()).rejects.toThrow();
+    await expect(getStations()).rejects.toThrow();
   });
 
   it("handles an expired Access session returning an HTML login page", async () => {

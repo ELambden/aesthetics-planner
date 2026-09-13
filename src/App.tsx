@@ -4,8 +4,10 @@ import { AreaDetail } from "./components/AreaDetail";
 import { ClinicPanel } from "./components/ClinicPanel";
 import { MapView } from "./components/MapView";
 import { RankedZones } from "./components/RankedZones";
+import { StationPanel } from "./components/StationPanel";
+import { analyseStations } from "./lib/stations";
 import { ScoreControls } from "./components/ScoreControls";
-import { getAreas, getClinics, getConfig, getDensityOverlay, MAP_LOAD_ERROR } from "./lib/api";
+import { getAreas, getClinics, getConfig, getDensityOverlay, getStations, MAP_LOAD_ERROR } from "./lib/api";
 import { PRESET_WEIGHTS } from "./lib/scoring";
 import type {
   AppConfig,
@@ -14,7 +16,10 @@ import type {
   DensityFeatureCollection,
   OpportunityFeature,
   ScorePreset,
-  ScoreWeights
+  ScoreWeights,
+  Station,
+  StationDataset,
+  StationRadius
 } from "./types/domain";
 
 const initialConfig: AppConfig = {
@@ -32,6 +37,11 @@ function App() {
   const [areas, setAreas] = useState<OpportunityFeature[]>([]);
   const [densityOverlay, setDensityOverlay] = useState<DensityFeatureCollection | null>(null);
   const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [stationData, setStationData] = useState<StationDataset>();
+  const [stationRadius, setStationRadius] = useState<StationRadius>(1);
+  const [showStations, setShowStations] = useState(true);
+  const [selectedStationId, setSelectedStationId] = useState<string>();
+  const [stationFocus, setStationFocus] = useState(0);
   const [clinicStatus, setClinicStatus] = useState<ClinicReviewStatus | "all">("all");
   const [selectedArea, setSelectedArea] = useState<OpportunityFeature>();
   const [selectedClinic, setSelectedClinic] = useState<Clinic>();
@@ -45,16 +55,18 @@ function App() {
     setError("");
     try {
       const nextConfig = await getConfig();
-      const [nextAreas, nextClinics, nextDensityOverlay] = await Promise.all([
+      const [nextAreas, nextClinics, nextDensityOverlay, nextStations] = await Promise.all([
         getAreas(weights),
-        getClinics(clinicStatus),
-        getDensityOverlay()
+        getClinics("all"),
+        getDensityOverlay(),
+        getStations()
       ]);
       if (requestId !== latestRequest.current) return;
       setConfig(nextConfig);
       setAreas(nextAreas.features);
       setDensityOverlay(nextDensityOverlay);
       setClinics(nextClinics);
+      setStationData(nextStations);
       setSelectedArea((current) =>
         nextAreas.features.find((area) => area.properties.areaCode === current?.properties.areaCode)
           ?? nextAreas.features[0]
@@ -66,7 +78,7 @@ function App() {
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [clinicStatus, weights]);
+  }, [weights]);
 
   useEffect(() => {
     void loadData();
@@ -75,6 +87,28 @@ function App() {
   function changePreset(nextPreset: ScorePreset) {
     setPreset(nextPreset);
     setWeights(PRESET_WEIGHTS[nextPreset]);
+  }
+
+  const visibleClinics = useMemo(() => clinics.filter((clinic) => clinicStatus === "all" || clinic.reviewStatus === clinicStatus), [clinics, clinicStatus]);
+  const stationAnalyses = useMemo(() => analyseStations(stationData?.stations ?? [], clinics, stationRadius), [stationData, clinics, stationRadius]);
+  const selectedStation = stationAnalyses.find((item) => item.station.id === selectedStationId);
+
+  function selectArea(area: OpportunityFeature) {
+    setSelectedArea(area);
+    setSelectedStationId(undefined);
+  }
+
+  function selectStation(station: Station) {
+    setSelectedStationId(station.id);
+    setSelectedClinic(undefined);
+    setSelectedArea(areas.find((area) => area.properties.areaCode === station.areaCode));
+    setShowStations(true);
+    setStationFocus((value) => value + 1);
+  }
+
+  function selectNearbyClinic(clinic: Clinic) {
+    setClinicStatus("all");
+    setSelectedClinic(clinic);
   }
 
   const staleClinics = useMemo(
@@ -125,7 +159,7 @@ function App() {
           <RankedZones
             areas={areas}
             selectedAreaCode={selectedArea?.properties.areaCode}
-            onSelect={setSelectedArea}
+            onSelect={selectArea}
           />
         </aside>
 
@@ -135,18 +169,29 @@ function App() {
           zoom={config.mapZoom}
           areas={areas}
           densityOverlay={densityOverlay}
-          clinics={clinics}
+          clinics={visibleClinics}
+          stations={stationData?.stations ?? []}
+          showStations={showStations}
+          onShowStations={setShowStations}
+          selectedStation={selectedStation}
+          stationRadius={stationRadius}
+          stationFocus={stationFocus}
+          onSelectStation={selectStation}
           selectedArea={selectedArea}
           selectedClinic={selectedClinic}
-          onSelectArea={setSelectedArea}
+          onSelectArea={selectArea}
           onSelectClinic={setSelectedClinic}
         />
 
         <aside className="right-rail">
           <AreaDetail area={selectedArea} />
+          {stationData && <StationPanel dataset={stationData} analyses={stationAnalyses}
+            selectedStationId={selectedStationId} radius={stationRadius}
+            onRadiusChange={setStationRadius} onSelect={selectStation}
+            onClear={() => setSelectedStationId(undefined)} onSelectClinic={selectNearbyClinic} />}
           <ClinicPanel
             googleMapsKey={config.googleMapsKey}
-            clinics={clinics}
+            clinics={visibleClinics}
             selectedClinic={selectedClinic}
             statusFilter={clinicStatus}
             onStatusFilter={setClinicStatus}

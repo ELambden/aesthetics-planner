@@ -44,17 +44,21 @@ const scripts = await Promise.all(assets.filter((name) => name.endsWith(".js") &
 assert(scripts.some((script) => script.includes(workers[0])),
   "The application must reference the emitted worker asset.");
 
-const dataFiles = ["clinics.json", "density-overlay.geojson", "opportunity-areas.geojson"];
+const dataFiles = ["clinics.json", "density-overlay.geojson", "opportunity-areas.geojson", "stations.json"];
 assert.deepEqual((await readdir(join(output, "data"))).sort(), [...dataFiles].sort(),
-  "Deploy only the three prepared map datasets.");
+  "Deploy only the four prepared map datasets.");
 for (const name of dataFiles) {
   const source = await readFile(join("public/data", name));
   const built = await readFile(join(output, "data", name));
   const hash = (buffer) => createHash("sha256").update(buffer).digest("hex");
   assert.equal(hash(built), hash(source), "Built data differs from local map: " + name);
   const data = JSON.parse(built);
-  assert(Array.isArray(data) ? data.length > 0 : data.type === "FeatureCollection" && data.features.length > 0,
+  assert(name === "stations.json" ? data.stations?.length > 0 : Array.isArray(data) ? data.length > 0 : data.type === "FeatureCollection" && data.features.length > 0,
     "Map data must not be empty: " + name);
+  if (name === "stations.json") {
+    assert.equal(data.coverageSourceSha256, hash(await readFile("public/data/density-overlay.geojson")),
+      "Rebuild station coverage after changing the study-area density polygons.");
+  }
 }
 console.log(githubPages
   ? "GitHub Pages build checked: real map files match; no raw source datasets included. This website is public when deployed."

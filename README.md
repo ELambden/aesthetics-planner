@@ -16,6 +16,7 @@ The app uses the prepared real datasets in `public/data` and runs without Google
 ```bash
 npm run data:refresh-overture
 npm run data:build-density
+npm run data:build-stations
 npm run data:validate
 ```
 
@@ -52,6 +53,7 @@ To rebuild the real population-density overlay from the local ONS files:
 
 ```bash
 npm run data:build-density
+npm run data:build-stations
 npm run data:validate
 ```
 
@@ -60,6 +62,25 @@ The generated files are:
 - `public/data/density-overlay.geojson`: clipped Output Area polygons for Havering + ceremonial Essex, coloured by parent LSOA TS006 density score.
 - `public/data/opportunity-areas.geojson`: ranked LSOA summary records used by the left-hand table and detail panel.
 
+
+## Station layer and nearby clinics
+
+Blue pins show 668 active stations within the map bounds, including 92 in the Essex/Havering study area. Use **Stations** on the map to toggle the layer, or search the Stations panel. Select a pin or shortlist entry to draw a 500 m or 1 km radius, see the nearest mapped clinic, and compare nearby clinic counts. The shortlist sorts by fewest nearby clinics. Counts use straight-line distance, include unreviewed clinic candidates, exclude rejected and permanently closed records, and are independent of the clinic display filter.
+
+Stations outside the study area are marked **Not assessed**; those whose radius reaches its boundary carry a coverage note. Low counts are leads to investigate, not evidence of unmet demand or a complete clinic inventory. The area scoring model is unchanged.
+
+The committed `public/data/stations.json` is a Department for Transport [NaPTAN](https://beta-naptan.dft.gov.uk/download) snapshot under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). It includes rail (National Rail, Overground and Elizabeth line), Underground and DLR access points. Nearby same-name interchanges are combined; platforms and separate entrances are not extra pins. NaPTAN's generic Rail category does not identify individual lines. Snapshot date, source IDs and a study-boundary checksum are stored with the data. No account, API key or runtime station service is needed.
+
+Only refreshing the station snapshot requires Python and Shapely:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r scripts/requirements-stations.txt
+npm run data:refresh-stations
+npm run data:validate
+```
+
+The refresh downloads the nationwide CSV into ignored `generated/naptan-stops.csv` (roughly 100 MB), then builds the small map snapshot. `npm run data:build-stations` reuses that CSV, downloading it if missing. Run it after rebuilding the density overlay: station coverage uses the actual Output Area polygons, and validation rejects an out-of-date boundary checksum. Commit the updated snapshot and publish Pages to share the refresh.
 
 ## Scoring Model
 
@@ -82,6 +103,7 @@ python3 -m venv .venv
 .venv/bin/pip install overturemaps
 npm run data:refresh-overture
 npm run data:build-density
+npm run data:build-stations
 npm run data:validate
 ```
 
@@ -100,6 +122,7 @@ Run the competitor refresh only when a backend Places API key is available:
 ```bash
 GOOGLE_PLACES_API_KEY=your-key npm run data:refresh-places
 npm run data:build-density
+npm run data:build-stations
 npm run data:validate
 ```
 

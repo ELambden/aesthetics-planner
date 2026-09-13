@@ -7,7 +7,7 @@ Publishing is manual. Pushing code alone does not publish or restore the website
 ## First upload
 
 1. Use [ELambden/aesthetics-planner](https://github.com/ELambden/aesthetics-planner). Keep the repository **private** while uploading and reviewing the project.
-2. Push this project to that repository. Its `.gitignore` excludes local keys, build output, downloaded source datasets and installed dependencies. Include all three files in `public/data` and the `.github/workflows` folder.
+2. Push this project to that repository. Its `.gitignore` excludes local keys, build output, downloaded source datasets and installed dependencies. Include all four files in `public/data` (including `stations.json`) and the `.github/workflows` folder.
 3. When ready to share, change the repository to **Public** in **Settings → General → Danger Zone → Change repository visibility**.
 4. In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
 5. Open **Actions → Publish Pages → Run workflow**, select the default branch (normally `main`), and run it.
@@ -30,7 +30,7 @@ For the next session, make the repository public, check that Pages still uses Gi
 
 ## Map appearance and keys
 
-The initial public build uses the existing OpenStreetMap fallback basemap. All population-density polygons, location rankings, clinics, filters and scoring controls use the same prepared data as the local map.
+The initial public build uses the existing OpenStreetMap fallback basemap. All population-density polygons, location rankings, clinics, station pins and radius analysis, filters and scoring controls use the same prepared data as the local map.
 
 Local `.env.local` values are deliberately ignored by this build. No map key is required.
 

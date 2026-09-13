@@ -1,8 +1,9 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { sampleAreas, sampleClinics } from "../src/data/sampleData";
-import type { Clinic, OpportunityFeatureCollection } from "../src/types/domain";
+import type { Clinic, OpportunityFeatureCollection, StationDataset } from "../src/types/domain";
 
 const areas: OpportunityFeatureCollection = existsSync(resolve("public/data/opportunity-areas.geojson"))
   ? JSON.parse(await readFile(resolve("public/data/opportunity-areas.geojson"), "utf8"))
@@ -40,9 +41,22 @@ for (const clinic of clinics) {
   }
 }
 
+const stationData: StationDataset = JSON.parse(await readFile("public/data/stations.json", "utf8"));
+if (!stationData.stations.length || !Number.isFinite(Date.parse(stationData.updatedAt))) errors.push("Station snapshot is empty or undated");
+const stationIds = new Set<string>();
+for (const station of stationData.stations) {
+  if (stationIds.has(station.id)) errors.push(`Duplicate station ${station.id}`);
+  stationIds.add(station.id);
+  if (!station.id || !station.name || !station.sourceIds.length || !station.modes.length) errors.push("Station missing identity or source");
+  if (!Number.isFinite(station.lat) || !Number.isFinite(station.lng) || station.lat < 51.38 || station.lat > 52.18 || station.lng < -0.35 || station.lng > 1.38) errors.push(`Station coordinates outside map: ${station.id}`);
+  if (typeof station.inStudyArea !== "boolean" || !Number.isFinite(station.boundaryDistanceKm) || station.boundaryDistanceKm < 0) errors.push(`Invalid station coverage: ${station.id}`);
+}
+const densityHash = createHash("sha256").update(await readFile("public/data/density-overlay.geojson")).digest("hex");
+if (stationData.coverageSourceSha256 !== densityHash) errors.push("Run data:build-stations after changing the density polygons");
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
 
-console.log(`Validated ${areas.features.length} areas and ${clinics.length} clinics`);
+console.log(`Validated ${areas.features.length} areas, ${clinics.length} clinics and ${stationData.stations.length} stations`);
